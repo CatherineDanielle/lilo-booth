@@ -78,7 +78,9 @@
 
     <button id="share" class="primary" disabled>Menyiapkan foto…</button>
     <a id="open" class="button secondary" target="_blank" rel="noopener" hidden>Buka foto</a>
-    <p id="hint" class="hint">Pilih <b>Instagram</b> lalu <b>Story</b>. Mau simpan aja? Pilih <b>Save Image</b>.</p>
+    <p id="hint" class="hint">Di menu share, pilih <b>Instagram</b> lalu <b>Story</b>. Kalau Instagram nggak muncul, pilih <b>Save Image</b> dulu, lalu tekan tombol di bawah.</p>
+    <a id="instagram" class="button secondary" href="instagram://story-camera">Buka Instagram Story</a>
+    <p class="hint">Di kamera Story, geser ke atas atau buka galeri. Fotomu ada paling atas.</p>
     <p id="error" class="hint" hidden>Fotonya belum ketemu. Coba scan ulang QR-nya, atau tunggu sebentar lalu refresh halaman ini.</p>
 
     <footer>@sharewithlilo · @appledeveloperacademy.binus</footer>
@@ -101,6 +103,7 @@
       shareButton.hidden = true;
       openLink.hidden = true;
       hint.hidden = true;
+      document.getElementById("instagram").hidden = true;
       error.hidden = false;
     }
 
@@ -108,7 +111,7 @@
       shareButton.hidden = true;
       openLink.href = imageURL;
       openLink.hidden = false;
-      hint.innerHTML = "Tekan lama fotonya, lalu pilih <b>Simpan ke Foto</b>. Setelah itu upload ke Instagram Story dari galeri.";
+      hint.innerHTML = "Tekan lama fotonya, lalu pilih <b>Simpan ke Foto</b>. Setelah itu tekan <b>Buka Instagram Story</b>.";
     }
 
     async function load() {
@@ -127,7 +130,7 @@
       }
 
       if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        shareButton.textContent = "Share ke Instagram Story";
+        shareButton.textContent = "Share / Simpan Foto";
         shareButton.disabled = false;
       } else {
         useFallback(imageURL);
