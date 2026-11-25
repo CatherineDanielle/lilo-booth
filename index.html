@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Lilo Photobooth</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Single+Day&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --brand: #8500DF;
+      --subtle: #F3E5FC;
+      --text: #1A1A1A;
+      --muted: #757575;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--subtle);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    main {
+      max-width: 440px;
+      margin: 0 auto;
+      padding: 28px 20px calc(32px + env(safe-area-inset-bottom));
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      text-align: center;
+    }
+    h1 {
+      margin: 0;
+      font-family: "Single Day", cursive;
+      font-weight: 400;
+      font-size: 40px;
+      color: var(--brand);
+    }
+    .sub { margin: 0; color: var(--muted); }
+    .photo {
+      width: 100%;
+      aspect-ratio: 9 / 16;
+      border-radius: 20px;
+      background: #fff;
+      object-fit: cover;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+    }
+    button, .button {
+      width: 100%;
+      min-height: 56px;
+      border: 0;
+      border-radius: 999px;
+      font-size: 18px;
+      font-weight: 600;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .primary { background: var(--brand); color: #fff; }
+    .primary:disabled { opacity: 0.5; }
+    .secondary { background: #fff; color: var(--text); border: 1px solid #E0D0EE; }
+    .hint { margin: 0; font-size: 14px; color: var(--muted); line-height: 1.5; }
+    footer { margin-top: 8px; font-size: 13px; color: var(--muted); }
+    [hidden] { display: none !important; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Lilo Photobooth</h1>
+    <p class="sub">Makasih udah mampir ke booth Lilo 💜</p>
+
+    <img id="photo" class="photo" alt="Foto kamu dari Lilo Photobooth">
+
+    <button id="share" class="primary" disabled>Menyiapkan foto…</button>
+    <a id="open" class="button secondary" target="_blank" rel="noopener" hidden>Buka foto</a>
+    <p id="hint" class="hint">Pilih <b>Instagram</b> lalu <b>Story</b>. Mau simpan aja? Pilih <b>Save Image</b>.</p>
+    <p id="error" class="hint" hidden>Fotonya belum ketemu. Coba scan ulang QR-nya, atau tunggu sebentar lalu refresh halaman ini.</p>
+
+    <footer>@sharewithlilo · @appledeveloperacademy.binus</footer>
+  </main>
+
+  <script>
+    const SUPABASE_URL = "https://mymyjgnoavfmbjrdaxah.supabase.co";
+    const BUCKET = "booth-photos";
+
+    const id = new URLSearchParams(location.search).get("id") || "";
+    const photo = document.getElementById("photo");
+    const shareButton = document.getElementById("share");
+    const openLink = document.getElementById("open");
+    const hint = document.getElementById("hint");
+    const error = document.getElementById("error");
+    let file = null;
+
+    function showError() {
+      photo.hidden = true;
+      shareButton.hidden = true;
+      openLink.hidden = true;
+      hint.hidden = true;
+      error.hidden = false;
+    }
+
+    function useFallback(imageURL) {
+      shareButton.hidden = true;
+      openLink.href = imageURL;
+      openLink.hidden = false;
+      hint.innerHTML = "Tekan lama fotonya, lalu pilih <b>Simpan ke Foto</b>. Setelah itu upload ke Instagram Story dari galeri.";
+    }
+
+    async function load() {
+      if (!/^[a-z0-9]{6,32}$/.test(id)) return showError();
+      const imageURL = `${SUPABASE_URL}/storage/v1/object/public/${BUCKET}/${id}.jpg`;
+      photo.src = imageURL;
+      photo.onerror = showError;
+
+      try {
+        const response = await fetch(imageURL);
+        if (!response.ok) throw new Error(response.status);
+        const blob = await response.blob();
+        file = new File([blob], `lilo-photobooth-${id}.jpg`, { type: "image/jpeg" });
+      } catch {
+        return useFallback(imageURL);
+      }
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        shareButton.textContent = "Share ke Instagram Story";
+        shareButton.disabled = false;
+      } else {
+        useFallback(imageURL);
+      }
+    }
+
+    shareButton.addEventListener("click", () => {
+      if (!file) return;
+      navigator.share({ files: [file] }).catch((err) => {
+        if (err.name !== "AbortError") useFallback(photo.src);
+      });
+    });
+
+    load();
+  </script>
+</body>
+</html>
